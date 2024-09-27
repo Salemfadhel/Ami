@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Solana Token</title>
+    <script src="https://unpkg.com/@solana/web3.js@latest"></script>
+    <script src="https://unpkg.com/@solana/spl-token@latest"></script>
+</head>
+<body>
+    <h1>Create Your Token on Solana</h1>
+    <button id="connectWallet">Connect Wallet</button>
+    <div id="walletInfo"></div>
+    <input type="text" id="tokenName" placeholder="Token Name" required disabled>
+    <input type="text" id="tokenSymbol" placeholder="Token Symbol" required disabled>
+    <input type="number" id="tokenSupply" placeholder="Total Supply" required disabled>
+    <button id="createToken" disabled>Create Token</button>
+
+    <script>
+        let provider;
+
+        const connectWallet = async () => {
+            if (window.solana && window.solana.isPhantom) {
+                try {
+                    provider = await window.solana.connect();
+                    document.getElementById('walletInfo').innerText = `Connected: ${provider.publicKey.toString()}`;
+                    document.getElementById('tokenName').disabled = false;
+                    document.getElementById('tokenSymbol').disabled = false;
+                    document.getElementById('tokenSupply').disabled = false;
+                    document.getElementById('createToken').disabled = false;
+                } catch (error) {
+                    console.error('Connection failed:', error);
+                }
+            } else {
+                alert('Please install the Phantom wallet.');
+            }
+        };
+
+        const createToken = async () => {
+            const name = document.getElementById('tokenName').value;
+            const symbol = document.getElementById('tokenSymbol').value;
+            const supply = parseInt(document.getElementById('tokenSupply').value);
+
+            try {
+                const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('devnet'), 'confirmed');
+
+                const mint = await splToken.Token.createMint(
+                    connection,
+                    provider.publicKey,
+                    provider.publicKey,
+                    null,
+                    9, // Decimals
+                    splToken.TOKEN_PROGRAM_ID,
+                );
+
+                const tokenAccount = await mint.getOrCreateAssociatedAccountInfo(provider.publicKey);
+                await mint.mintTo(tokenAccount.address, provider.publicKey, [], supply);
+
+                alert(`Token ${name} (${symbol}) created successfully with supply: ${supply}`);
+            } catch (error) {
+                console.error('Error creating token:', error);
+                alert('Failed to create token. Please check console for details.');
+            }
+        };
+
+        document.getElementById('connectWallet').onclick = connectWallet;
+        document.getElementById('createToken').onclick = createToken;
+    </script>
+</body>
+</html>
